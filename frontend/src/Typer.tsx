@@ -56,9 +56,9 @@ const Typer: React.FC = () => {
             else if (idx < letterIdx && word[idx] != currentWord[idx])
               return <div className="incorrect-letter">{word[idx]}</div>
             else if (idx == letterIdx && letterIdx < word.length)
-              return <div className="active-letter"  >{word[idx]}</div>;
+              return <div className="active-letter"  ><div className="caret">&nbsp;</div>{word[idx]}</div>;
             else if (idx >= currentWord.length && idx >= word.length)
-              return <div className="active-letter"  >{' '}</div>;
+              return <div className="active-letter"  ><div className="caret">&nbsp;</div></div>;
             return <div className="letter">{word[idx]}</div>
           }
           )
