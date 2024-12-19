@@ -11,9 +11,6 @@ const Typer: React.FC = () => {
   const [wordIdx, setWordIdx] = useState<number>(0);
 
   function handleKeyPresses(e: KeyboardEvent): void {
-    if(e.key == ' '){
-      e.preventDefault();
-    }
     if (e.key.length == 1) {
       const c = e.key.charCodeAt(0);
       if (e.key == " " && text[wordIdx] === currentWord) {
@@ -59,19 +56,23 @@ const Typer: React.FC = () => {
 
     getWords();
   }, [])
-
   useEffect(() => {
+    //const preventScroll = (e: FocusEvent) => e.preventDefault;
     const element = divRef.current;
     element?.addEventListener("keydown", handleKeyPresses);
     element?.focus();
-    focusRef.current?.scrollIntoView({
-      behavior: 'instant',
+    //element?.addEventListener("focus", preventScroll);
+    //element?.addEventListener("focusin", preventScroll);
+    element?.scrollIntoView({
+      behavior: 'smooth',
       block: 'start',
       inline: 'start',
     })
 
     return () => {
       element?.removeEventListener("keydown", handleKeyPresses);
+      //element?.removeEventListener("focus", preventScroll);
+      //element?.removeEventListener("focusin", preventScroll);
     }
   }, [currentWord, wordIdx, letterIdx, text])
 

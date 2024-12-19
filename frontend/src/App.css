@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap');
 
 #root {
-  max-width: 1280px;
+  max-width: 80%;
   margin: 0 auto;
   /*padding: 2rem;*/
   box-sizing: border-box;
@@ -15,12 +15,18 @@
   font-size: 5rem;
   font-weight: 900;
   gap: 1ch;
+  height: 40rem;
+  overflow: scroll;
+  padding: 0 2ch;
 }
 
 .typing-area:focus,
 .typing-area:focus-visible {
   border: none;
   outline: none;
+  height: 40rem;
+  padding: 0 2ch;
+  overflow: scroll;
 }
 
 
