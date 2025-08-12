@@ -1,13 +1,14 @@
 import './App.css'
-import HomePage from './pages/Homepage'
-import Typer from './Typer'
+import Game from './Game'
 
 function App() {
 
-  return (
-    //<Typer />
-    <HomePage/>
-  )
+	return (
+		// <Typer />
+		// <HomePage/>
+		// <Game />
+		<Game />
+	)
 }
 
 export default App
