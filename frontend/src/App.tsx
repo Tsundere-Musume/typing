@@ -4,9 +4,6 @@ import Game from './Game'
 function App() {
 
 	return (
-		// <Typer />
-		// <HomePage/>
-		// <Game />
 		<Game />
 	)
 }
