@@ -1,13 +1,19 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { GameState } from "./types/game";
 import TypingText from "./components/TypingText";
+import { WebsocketContext } from "./components/SocketContext";
 
 const Game: React.FC = () => {
+	const [ready, val, sockSend] = useContext(WebsocketContext);
 	const [gameState, setGameState] = useState<GameState>({ currentWord: "", currentWordIdx: 0, wordList: [] });
 	const gameDiv = useRef<HTMLDivElement>(null);
 
+	useEffect(() => { console.log(val) }, [val])
 	useEffect(() => {
 		const handleKeyPress = (e: KeyboardEvent) => {
+			if (ready) {
+				sockSend!(`action:${e.key}`)
+			}
 			if (e.key == ' ') {
 				e.preventDefault();
 			}
@@ -52,17 +58,35 @@ const Game: React.FC = () => {
 
 	useEffect(() => {
 		setGameState({
-			wordList: ["hello", "world", "these", "are", "some", "words"],
-			currentWord: "hell",
+			wordList: [],
+			currentWord: "",
 			currentWordIdx: 0,
 		})
+		const getWords = async () => {
+			try {
+				const response = await fetch("http://localhost:8000/words");
+
+				if (!response.ok) {
+					console.error("Error retrieving data from the server");
+				}
+
+				const data = await response.json();
+				setGameState(prev => ({
+					...prev,
+					wordList: data
+				}))
+			} catch (e) {
+				console.error(e);
+			}
+		}
+
+		getWords();
+
 	}, [])
 
 
-
-
 	return <div className="game" ref={gameDiv} tabIndex={0}>
-		<TypingText {...gameState} />
+		{ready && <TypingText {...gameState} />}
 	</div>
 
 }

@@ -6,16 +6,19 @@ const ActiveWord: React.FC<{ wordToType: string, typedWord: string }> = ({ wordT
 	const colorFromCheck = (i: number) => wordToType[i] == typedWord[i] ? "green" : "red"
 	const remainingColor = wordToType.length > typedWord.length ? "white" : "red";
 	const activeWordRef = useRef<HTMLDivElement | null>(null);
-
+	const activeLetterRef = useRef<HTMLSpanElement | null>(null);
 	const [caretProps, setCaretProps] = useState<CaretProps | null>(null);
+
 	useEffect(() => {
+		console.log(activeWordRef.current)
 		if (activeWordRef.current) {
+			//TODO: don't question this, left for later 
 			const elem = activeWordRef.current.firstElementChild ?? activeWordRef.current;
 			const rect = elem.getBoundingClientRect();
 			setCaretProps({
 				position: {
-					top: rect.top,
-					left: rect.left + (rect.width * typedWord.length),
+					top: 0,
+					left: (typedWord.length * rect.width),
 				},
 				dimension: {
 					width: rect.width,
@@ -24,13 +27,14 @@ const ActiveWord: React.FC<{ wordToType: string, typedWord: string }> = ({ wordT
 			});
 			elem.scrollIntoView({ behavior: 'smooth', inline: 'center' });
 		}
-	}, [typedWord])
+	}, [typedWord, activeWordRef])
 
 	const letters = [];
 	for (let i = 0; i < l; ++i) {
-		const char = typedWord[i] ?? wordToType[i];
+		const char = wordToType[i] ?? typedWord[i];
 		const color = i < typedWord.length ? colorFromCheck(i) : remainingColor;
-		letters.push(<span key={i} style={{ color }}>{char}</span>)
+		const ref = i == typedWord.length ? activeLetterRef : null;
+		letters.push(<span key={i} style={{ color }} ref={ref}>{char}</span>)
 	}
 
 	return <div className='active-word' style={{ position: 'relative' }} ref={activeWordRef}>
@@ -55,7 +59,7 @@ const Caret: React.FC<CaretProps> = ({ position, dimension }) => {
 	return (
 		<div
 			style={{
-				position: 'fixed',
+				position: 'absolute',
 				top: position.top,
 				left: position.left,
 				width: dimension.width,

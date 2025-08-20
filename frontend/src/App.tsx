@@ -1,10 +1,12 @@
 import './App.css'
+import { WebsocketProvider } from './components/SocketContext'
 import Game from './Game'
 
 function App() {
-
 	return (
-		<Game />
+		<WebsocketProvider>
+			<Game />
+		</WebsocketProvider>
 	)
 }
 
