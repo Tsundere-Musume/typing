@@ -26,7 +26,8 @@ func main() {
 	e.GET("/words", app.genereateWords)
 	e.GET("/read-session", readSession)
 	e.GET("/connect", app.connect)
-	// e.GET("/session", createSession)
+	e.GET("/session", createSession)
+	e.GET("/game", app.gameTime)
 
 	e.Logger.Fatal(e.Start(":8000"))
 

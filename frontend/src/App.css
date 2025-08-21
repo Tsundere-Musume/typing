@@ -76,3 +76,22 @@
 /*     opacity: 1; */
 /*   } */
 /* } */
+
+
+form {
+	display: flex;
+	width: 400px;
+	gap: 10px;
+	flex-direction: column;
+}
+
+form label{
+	display: flex;
+}
+
+form label > :first-child{
+	flex: 3;
+}
+form label > :last-child{
+	flex: 5;
+}

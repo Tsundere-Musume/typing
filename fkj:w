@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useId, useRef, useState } from "react";
 import { GameState } from "./types/game";
 import TypingText from "./components/TypingText";
 import { WebsocketContext } from "./components/SocketContext";
@@ -7,20 +7,12 @@ import { SessionContext } from "./components/SessionContext";
 const Game: React.FC = () => {
 	const [ready, msg, sockSend] = useContext(WebsocketContext);
 	const { sessionData } = useContext(SessionContext);
-	const [gameState, setGameState] = useState<GameState>({ currentWord: "", currentWordIdx: 0, wordList: [], players: {} });
+	const [gameState, setGameState] = useState<GameState>({ currentWord: "", currentWordIdx: 0, wordList: [] });
 	const gameDiv = useRef<HTMLDivElement>(null);
-	let first = true;
 
 	useEffect(() => {
-		if (msg && first) {
-			const data = JSON.parse(msg!);
-			console.log(data)
-			setGameState(prev => ({
-				...prev,
-				players: data["players"]
-			}));
-			first = false;
-		}
+		// console.log("received: ", msg)
+		console.log('Game state: ', gameState)
 	}, [msg])
 
 	useEffect(() => {
@@ -65,6 +57,7 @@ const Game: React.FC = () => {
 					cmd_type: "type",
 					args: [e.key],
 					user_id: sessionData?.user_id
+
 				}
 			)
 			sockSend!(a)
@@ -83,7 +76,6 @@ const Game: React.FC = () => {
 			wordList: [],
 			currentWord: "",
 			currentWordIdx: 0,
-			players: {},
 		})
 		const getWords = async () => {
 			try {

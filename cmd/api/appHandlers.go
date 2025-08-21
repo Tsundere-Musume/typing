@@ -2,8 +2,10 @@ package main
 
 import (
 	"net/http"
+	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 )
 
@@ -15,6 +17,13 @@ var (
 	}
 )
 
+var gameInstance = Game{
+	WordList: []string{"murky", "miniature", "industry", "goose", "voice", "bite", "laugh", "elite", "snakes", "good-bye", "flee", "act", "steady", "horses", "mindless", "exultant", "massive", "tranquil", "observe", "hope", "well"},
+	GameId:   "1",
+	mu:       &sync.Mutex{},
+	Players:  make(Players),
+}
+
 func (app *App) genereateWords(c echo.Context) error {
 	data := []string{"murky", "miniature", "industry", "goose", "voice", "bite", "laugh", "elite", "snakes", "good-bye", "flee", "act", "steady", "horses", "mindless", "exultant", "massive", "tranquil", "observe", "hope", "well"}
 	return c.JSON(http.StatusOK, data)
@@ -25,19 +34,24 @@ func (app *App) connect(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	defer ws.Close()
 
-	for {
-		mt, message, err := ws.ReadMessage()
-		if err != nil {
-			c.Logger().Error("Read error:", err)
-		}
-		c.Logger().Info("Received: %s", message)
-
-		// Echo message back to client
-		err = ws.WriteMessage(mt, message)
-		if err != nil {
-			c.Logger().Error("Write error:", err)
-		}
+	session, err := session.Get("session", c)
+	if err != nil {
+		return err
 	}
+	id := session.Values["id"].(string)
+	gameInstance.AddUserWithID(id, ws)
+	gameInstance.HandleConnection(ws)
+
+	return nil
+}
+
+func (app *App) gameTime(c echo.Context) error {
+	// session, err := session.Get("session", c)
+	// if err != nil {
+	// 	return err
+	// }
+	// id := session.Values["id"].(string)
+	// gameInstance.AddUserWithID(id)
+	return c.JSON(http.StatusOK, gameInstance)
 }

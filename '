@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { GameState } from "../types/game";
 
-const ActiveWord: React.FC<{ wordToType: string, typedWord: string, sroll: boolean }> = ({ wordToType, typedWord, sroll }) => {
+const ActiveWord: React.FC<{ wordToType: string, typedWord: string }> = ({ wordToType, typedWord, sroll }) => {
 	const l = Math.max(wordToType.length, typedWord.length);
 	const colorFromCheck = (i: number) => wordToType[i] == typedWord[i] ? "green" : "red"
 	const remainingColor = wordToType.length > typedWord.length ? "white" : "red";
@@ -37,6 +37,7 @@ const ActiveWord: React.FC<{ wordToType: string, typedWord: string, sroll: boole
 		const ref = i == typedWord.length ? activeLetterRef : null;
 		letters.push(<span key={i} style={{ color }} ref={ref}>{char}</span>)
 	}
+
 	return <div className='active-word' style={{ position: 'relative' }} ref={activeWordRef}>
 		{letters}
 		{caretProps && <Caret {...caretProps} />}
@@ -74,23 +75,24 @@ const Caret: React.FC<CaretProps> = ({ position, dimension }) => {
 }
 
 const TypingText: React.FC<GameState> = ({ wordList, currentWord, currentWordIdx, players }) => {
-	console.log(currentWordIdx)
+	console.log(players)
+	let otherUserPos = null;
+	let otherUserTyped = "";
 
-	const words = wordList?.map((word, idx) =>
-		currentWordIdx == idx
-			?
-			<ActiveWord wordToType={wordList[currentWordIdx]} typedWord={currentWord!} key={idx} sroll={true} /> :
-			<InactiveWord word={word} key={idx} />
-	)
-
-	for (const k in players) {
-		console.log(k, players[k])
-		const player = players[k]
-		const i = player.pos[0];
-		words[i] = <ActiveWord wordToType={wordList[i]} typedWord={player.current_word!} key={i} sroll={false} />
-	}
 	return <div className="typing-area" >
-		{words}
+		{wordList?.map((word, idx) =>
+			currentWordIdx == idx ||
+				(Object.keys(players).some(
+					k => {
+						otherUserPos = players[k].pos
+						otherUserTyped = players[k].current_word
+						return players[k].pos[0] == currentWordIdx
+					}
+				))
+				?
+				<ActiveWord wordToType={currentWordIdx == idx ? wordList[currentWordIdx] : wordList[otherUserPos[0]]} typedWord={currentWordIdx == idx ? currentWord! : otherUserTyped} key={idx} /> :
+				<InactiveWord word={word} key={idx} />
+		)}
 	</div>
 
 }
