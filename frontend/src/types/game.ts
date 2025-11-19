@@ -6,11 +6,12 @@ export type Player = {
 }
 
 export type GameState = {
-	// gameId: string;
+	gameId: string;
 	wordList: string[];
-	// Current Player
-	currentWord: string;
-	currentWordIdx: number;
+	players: {[key: string]: Player};
 
-	players: object
+	// Current Player
+	currentPlayerId: string;
+	// currentWord: string;
+	// currentWordIdx: number;
 }

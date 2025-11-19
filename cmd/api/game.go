@@ -11,15 +11,15 @@ type Player struct {
 	Id          string `json:"id"`
 	Name        string `json:"name"`
 	Pos         [2]int `json:"pos"`
-	CurrentWord string `json:"current_word"`
+	CurrentWord string `json:"currentWord"`
 	conn        *websocket.Conn
 }
 
 type Players map[string]*Player
 
 type Game struct {
-	WordList []string `json:"word_list"`
-	GameId   string   `json:"game_id"`
+	WordList []string `json:"wordList"`
+	GameId   string   `json:"gameId"`
 	Players  Players  `json:"players"`
 	mu       *sync.Mutex
 }
@@ -73,7 +73,7 @@ func (g *Game) HandleConnection(conn *websocket.Conn) {
 
 func (g *Game) Broadcast(cmd *Cmd) {
 	for _, player := range g.Players {
-		player.conn.WriteJSON(g)
+		player.conn.WriteJSON(cmd)
 	}
 
 }

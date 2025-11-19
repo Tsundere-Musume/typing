@@ -5,27 +5,29 @@ import { WebsocketContext } from "./components/SocketContext";
 import { SessionContext } from "./components/SessionContext";
 
 const Game: React.FC = () => {
-	const [ready, msg, sockSend] = useContext(WebsocketContext);
-	const { sessionData } = useContext(SessionContext);
-	const [gameState, setGameState] = useState<GameState>({ currentWord: "", currentWordIdx: 0, wordList: [], players: {} });
+	const [socketReady, msg, sockSend] = useContext(WebsocketContext);
+	const { sessionReady, sessionData } = useContext(SessionContext);
+	const [gameState, setGameState] = useState<GameState>({} as GameState);
 	const gameDiv = useRef<HTMLDivElement>(null);
-	let first = true;
+	let [ready, setReady] = useState(false);
 
 	useEffect(() => {
-		if (msg && first) {
-			const data = JSON.parse(msg!);
-			console.log(data)
-			setGameState(prev => ({
-				...prev,
-				players: data["players"]
-			}));
-			first = false;
+		if (msg && sessionReady) {
+			const userId = sessionData?.user_id;
+			const cmd = JSON.parse(msg);
+			if (cmd.cmd_type === "type" && cmd.user_id != userId) {
+				const player = gameState.players[cmd.user_id];
+				player.currentWord += cmd.args[0];
+				player.pos[1] += 1;
+				setGameState(gameState);
+			}
+
 		}
 	}, [msg])
 
 	useEffect(() => {
 		const handleKeyPress = (e: KeyboardEvent) => {
-			if (!ready) {
+			if (!ready || !sessionReady || !socketReady) {
 				return
 			}
 			if (e.key == ' ') {
@@ -33,31 +35,38 @@ const Game: React.FC = () => {
 				e.preventDefault();
 			}
 
+			const userId = sessionData?.user_id!;
 			setGameState(prev => {
-				const correct = prev.wordList[prev.currentWordIdx] == prev.currentWord;
+				const user = prev.players[userId];
+
+				const correct = prev.wordList[user.pos[1]] == user.currentWord;
 				if (correct && e.key === ' ') {
-					return {
-						...prev,
-						currentWord: "",
-						currentWordIdx: prev.currentWordIdx + 1,
-					}
+					prev.players[userId].currentWord = "";
+					prev.players[userId].pos[0] += 1;
+					prev.players[userId].pos[1] = 0;
+					return prev;
 				} else { return prev; }
 			})
 
 			if (e.key == "Backspace") {
-				setGameState(prev => ({
-					...prev,
-					currentWord: prev.currentWord.slice(0, prev.currentWord.length - 1),
-				}));
+				setGameState(prev => {
+					const user = prev.players[userId];
+					user.currentWord = user.currentWord.slice(0, user.currentWord.length - 1);
+					user.pos[1] = Math.max(user.pos[1] - 1, 0);
+					return prev;
+
+				});
 			}
 
 			if (e.key.length === 1) {
 				const c = e.key.charCodeAt(0);
 				if (c > 32 && c < 127) {
-					setGameState(prev => ({
-						...prev,
-						currentWord: prev.currentWord.concat(e.key),
-					}));
+					setGameState(prev => {
+						const user = prev.players[userId];
+						user.currentWord = user.currentWord.concat(e.key);
+						user.pos[1] += 1;
+						return prev;
+					});
 				}
 			}
 			const a = JSON.stringify(
@@ -79,12 +88,6 @@ const Game: React.FC = () => {
 	}, [ready])
 
 	useEffect(() => {
-		setGameState({
-			wordList: [],
-			currentWord: "",
-			currentWordIdx: 0,
-			players: {},
-		})
 		const getWords = async () => {
 			try {
 				const response = await fetch("http://localhost:8000/game", {
@@ -96,24 +99,26 @@ const Game: React.FC = () => {
 				}
 
 				const data = await response.json();
-				setGameState(prev => ({
-					...prev,
-					wordList: data.word_list
-				}))
+				console.log(data.players)
+				setGameState({
+					...data,
+					currentPlayerId: sessionData?.user_id,
+				} as GameState)
+				setReady(true);
 			} catch (e) {
 				console.error(e);
 			}
 		}
 
-		getWords();
+		sessionReady && getWords();
 
-	}, [])
+	}, [sessionReady])
 
 
 	return <div className="game" ref={gameDiv} tabIndex={0}>
 		{/* <TypingText {...gameState} /> */}
 		{sessionData?.user_id}
-		{ready && <TypingText {...gameState} />}
+		{ready && socketReady && <TypingText {...gameState} />}
 	</div>
 
 }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { GameState } from "../types/game";
+import { GameState, Player } from "../types/game";
 
-const ActiveWord: React.FC<{ wordToType: string, typedWord: string, sroll: boolean }> = ({ wordToType, typedWord, sroll }) => {
+const ActiveWord: React.FC<{ wordToType: string, typedWord: string }> = ({ wordToType, typedWord }) => {
 	const l = Math.max(wordToType.length, typedWord.length);
 	const colorFromCheck = (i: number) => wordToType[i] == typedWord[i] ? "green" : "red"
 	const remainingColor = wordToType.length > typedWord.length ? "white" : "red";
@@ -25,8 +25,7 @@ const ActiveWord: React.FC<{ wordToType: string, typedWord: string, sroll: boole
 					height: rect.height,
 				},
 			});
-			if (sroll)
-				elem.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+			elem.scrollIntoView({ behavior: 'smooth', inline: 'center' });
 		}
 	}, [typedWord, activeWordRef])
 
@@ -42,6 +41,7 @@ const ActiveWord: React.FC<{ wordToType: string, typedWord: string, sroll: boole
 		{caretProps && <Caret {...caretProps} />}
 	</div >
 }
+
 
 const InactiveWord: React.FC<{ word: string }> = ({ word }) => {
 	return <div className='inactive-word'>
@@ -73,22 +73,78 @@ const Caret: React.FC<CaretProps> = ({ position, dimension }) => {
 	);
 }
 
-const TypingText: React.FC<GameState> = ({ wordList, currentWord, currentWordIdx, players }) => {
-	console.log(currentWordIdx)
+interface WordWithPlayersProps {
+	wordToType: string;
+	players: Player[];
+};
 
-	const words = wordList?.map((word, idx) =>
-		currentWordIdx == idx
-			?
-			<ActiveWord wordToType={wordList[currentWordIdx]} typedWord={currentWord!} key={idx} sroll={true} /> :
-			<InactiveWord word={word} key={idx} />
-	)
-
-	for (const k in players) {
-		console.log(k, players[k])
-		const player = players[k]
-		const i = player.pos[0];
-		words[i] = <ActiveWord wordToType={wordList[i]} typedWord={player.current_word!} key={i} sroll={false} />
+function generateCarets(wordToType: string, players: Player[], width: number, height: number) {
+	const l = wordToType.length;
+	const result = [];
+	for (const player of players) {
+		result.push(
+			<Caret position={{ top: 0, left: Math.min(l, player.currentWord.length) * width }} dimension={{ width, height }} />
+		)
 	}
+	return result;
+}
+const WordWithPlayers: React.FC<WordWithPlayersProps> = ({ wordToType, players }) => {
+	const letters = [];
+	const wordRef = useRef<HTMLDivElement | null>(null);
+	for (let i = 0; i < wordToType.length; ++i) {
+		const char = wordToType[i];
+		letters.push(<span key={i} >{char}</span>)
+	}
+
+	const [carets, setCarets] = useState<JSX.Element[]>([]);
+
+	useEffect(() => {
+		if (wordRef.current) {
+			//TODO: don't question this, left for later 
+			const elem = wordRef.current.firstElementChild ?? wordRef.current;
+			const rect = elem.getBoundingClientRect();
+			const r = generateCarets(wordToType, players, rect.width, rect.height);
+			setCarets(r)
+		}
+	}, [wordRef])
+	return <div className='active-word' style={{ position: 'relative' }} ref={wordRef}>
+		{letters}
+		{carets}
+	</div >
+}
+
+const TypingText: React.FC<GameState> = ({ wordList, currentPlayerId, players }) => {
+	const getPlayersOnWord = (idx: number) => {
+		const result = [];
+		for (const id in players) {
+			if (id === currentPlayerId) {
+				continue;
+			}
+			const player = players[id];
+			if (idx === player.pos[0]) {
+				result.push(player);
+			}
+		}
+
+		return result;
+	}
+	const currentPlayer = players[currentPlayerId];
+
+	const words: JSX.Element[] = [];
+	for (let idx = 0; idx < wordList.length; ++idx) {
+		const word = wordList[idx];
+		const p = getPlayersOnWord(idx);
+
+		if (idx === currentPlayer.pos[0]) {
+			const currentWord = currentPlayer.currentWord;
+			words.push(<ActiveWord wordToType={word} typedWord={currentWord!} key={idx} />);
+		} else if (p.length > 0) {
+			words.push(<WordWithPlayers wordToType={word} players={p} />);
+		} else {
+			words.push(<InactiveWord word={word} key={idx} />);
+		}
+	}
+
 	return <div className="typing-area" >
 		{words}
 	</div>
